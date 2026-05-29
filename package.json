@@ -1,0 +1,19 @@
+{
+  "name": "message-scheduler",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "api",
+    "web",
+    "scheduler",
+    "imessage-gateway"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace api",
+    "build": "npm run build --workspace api",
+    "lint": "npm run lint --workspace api",
+    "test": "npm run test --workspace api",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
+  }
+}

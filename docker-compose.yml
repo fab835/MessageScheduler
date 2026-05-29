@@ -1,0 +1,149 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: message-scheduler-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-message_scheduler}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-message_scheduler}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: message-scheduler-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: message-scheduler-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: message-scheduler-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:${KAFKA_PORT:-9092}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  api:
+    build:
+      context: ./api
+    container_name: message-scheduler-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      NODE_ENV: development
+      PORT: 3333
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/message_scheduler?schema=public
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_CLIENT_ID: message-scheduler-api
+      KAFKA_TOPIC_MESSAGE_DISPATCH_REQUESTED: message.dispatch.requested
+      KAFKA_TOPIC_MESSAGE_SENT: message.sent
+      KAFKA_TOPIC_MESSAGE_FAILED: message.failed
+      JWT_SECRET: change-me
+      LOG_LEVEL: info
+    ports:
+      - "${API_PORT:-3333}:3333"
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    command: sh -lc "npm install && npm run prisma:generate && npm run dev"
+
+  web:
+    build:
+      context: ./web
+    container_name: message-scheduler-web
+    depends_on:
+      - api
+    environment:
+      PORT: 3000
+      API_BASE_URL: http://api:3333
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+    command: sh -lc "npm install && npm run dev"
+
+  scheduler:
+    build:
+      context: ./scheduler
+    container_name: message-scheduler-scheduler
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      PORT: 3334
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/message_scheduler?schema=public
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_CLIENT_ID: message-scheduler-scheduler
+      KAFKA_TOPIC_MESSAGE_DISPATCH_REQUESTED: message.dispatch.requested
+      LOG_LEVEL: info
+      SCHEDULER_CRON: "* * * * *"
+    ports:
+      - "${SCHEDULER_PORT:-3334}:3334"
+    command: sh -lc "npm install && npm run dev"
+
+  imessage-gateway:
+    build:
+      context: ./imessage-gateway
+    container_name: message-scheduler-imessage-gateway
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      PORT: 3335
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/message_scheduler?schema=public
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_CLIENT_ID: message-scheduler-imessage-gateway
+      KAFKA_CONSUMER_GROUP_IMESSAGE_GATEWAY: imessage-gateway-consumers
+      KAFKA_TOPIC_MESSAGE_DISPATCH_REQUESTED: message.dispatch.requested
+      KAFKA_TOPIC_MESSAGE_SENT: message.sent
+      KAFKA_TOPIC_MESSAGE_FAILED: message.failed
+      GATEWAY_MIN_DELAY_MS: 1500
+      GATEWAY_MAX_DELAY_MS: 4000
+      GATEWAY_SUCCESS_RATE: 0.7
+      LOG_LEVEL: info
+    ports:
+      - "${IMESSAGE_GATEWAY_PORT:-3335}:3335"
+    command: sh -lc "npm install && npm run prisma:generate && npm run dev"
+
+volumes:
+  postgres-data:
+  redis-data:
