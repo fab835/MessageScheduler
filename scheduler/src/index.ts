@@ -5,6 +5,7 @@ import { env } from "./helpers/env.js";
 import { logger } from "./helpers/logger.js";
 import { connectKafka, disconnectKafka } from "./integrations/kafka.js";
 import { dispatchDueMessages } from "./jobs/dispatch-due-messages.js";
+import { runConsumer } from "./consumer/index.js";
 
 let scheduledTask: ScheduledTask | undefined;
 
@@ -25,6 +26,8 @@ const start = async (): Promise<void> => {
   });
 
   logger.info({ cron: env.SCHEDULER_CRON }, "Scheduler started");
+
+  await runConsumer();
 };
 
 const shutdown = async (): Promise<void> => {
