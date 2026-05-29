@@ -7,7 +7,7 @@ export const createMessageInteractor = async (payload: CreateMessageInput) => {
     data: {
       content: payload.content,
       to: payload.to,
-      status: MessageStatus.QUEUED,
+      status: MessageStatus.SCHEDULED,
       scheduledDate: new Date(payload.scheduledDate)
     }
   });
