@@ -4,12 +4,13 @@ import { closePostgres } from "./db/postgres.js";
 import { env } from "./helpers/env.js";
 import { logger } from "./helpers/logger.js";
 import { connectKafka, disconnectKafka } from "./integrations/kafka.js";
+import { dispatchDueMessages } from "./jobs/dispatch-due-messages.js";
 
 let scheduledTask: ScheduledTask | undefined;
 
 const runCycle = async (): Promise<void> => {
   try {
-    console.log("Scheduler cycle");
+    await dispatchDueMessages();
   } catch (error) {
     logger.error({ error }, "Scheduler cycle failed");
   }
