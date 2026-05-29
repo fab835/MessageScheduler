@@ -10,6 +10,8 @@ The current project structures the shared infrastructure and the flow of backend
 - `scheduler`: Node.js service with cron jobs. Search scheduled messages per minute.
 - `imessage-gateway`: Node.js service that simulates iMessage sending. It has a randon delay and a randon status success and fail response.
 
+![Project Architecture](docs/systemArchitecture.png)
+
 ## Description
 
 The platform is designed to let users schedule outbound messages, track delivery progress, and operate a queue-backed messaging workflow. The backend currently includes:
@@ -30,16 +32,16 @@ cp .env.example .env
 cp api/.env.example api/.env
 ```
 
-2. DB Migrate (First init)
-```bash
-docker compose run --rm api npm install
-docker compose run --rm api npm run prisma:migrate:dev -- --name init
-```
-
-3. Start the infrastructure and services:
+2. Start the infrastructure and services:
 
 ```bash
 docker compose up --build
+```
+
+3. DB Migrate (First init)
+
+```bash
+docker compose run --rm api npm run prisma:migrate:dev -- --name init
 ```
 
 The API runs on `http://localhost:3333`.
