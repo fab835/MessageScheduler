@@ -123,7 +123,10 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/message_scheduler?schema=public
       KAFKA_BROKERS: kafka:29092
       KAFKA_CLIENT_ID: message-scheduler-scheduler
+      KAFKA_CONSUMER_GROUP_SCHEDULER: scheduler-consumers
       KAFKA_TOPIC_MESSAGE_DISPATCH_REQUESTED: message.dispatch.requested
+      KAFKA_TOPIC_MESSAGE_SENT: message.sent
+      KAFKA_TOPIC_MESSAGE_FAILED: message.failed
       LOG_LEVEL: info
       SCHEDULER_CRON: "* * * * *"
     ports:
