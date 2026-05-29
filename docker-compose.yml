@@ -129,7 +129,6 @@ services:
       - kafka
     environment:
       PORT: 3335
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/message_scheduler?schema=public
       KAFKA_BROKERS: kafka:29092
       KAFKA_CLIENT_ID: message-scheduler-imessage-gateway
       KAFKA_CONSUMER_GROUP_IMESSAGE_GATEWAY: imessage-gateway-consumers
@@ -142,7 +141,7 @@ services:
       LOG_LEVEL: info
     ports:
       - "${IMESSAGE_GATEWAY_PORT:-3335}:3335"
-    command: sh -lc "npm install && npm run prisma:generate && npm run dev"
+    command: sh -lc "npm install && npm run dev"
 
 volumes:
   postgres-data:
