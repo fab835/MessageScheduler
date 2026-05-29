@@ -11,6 +11,9 @@ export const metadata: Metadata = {
 
 const RootLayout = ({ children }: { children: ReactNode }) => (
   <html lang="en">
+    <head>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css"/>
+    </head>
     <body>{children}</body>
   </html>
 );
