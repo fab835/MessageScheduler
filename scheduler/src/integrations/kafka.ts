@@ -9,12 +9,16 @@ const kafka = new Kafka({
 });
 
 export const producer = kafka.producer();
+export const consumer = kafka.consumer({
+  groupId: env.KAFKA_CONSUMER_GROUP_SCHEDULER
+});
 
 export const connectKafka = async (): Promise<void> => {
   await producer.connect();
+  await consumer.connect();
 };
 
 export const disconnectKafka = async (): Promise<void> => {
+  await consumer.disconnect();
   await producer.disconnect();
 };
-
