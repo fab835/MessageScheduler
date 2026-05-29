@@ -57,3 +57,8 @@ The Web UI runs on `http://localhost:3000`.
 ├── imessage-gateway/
 └── docker-compose.yml
 ```
+
+## TODO
+- Form validations, number mask and date picker on WEB UI
+- Fail check and event retry
+- Message pagination
