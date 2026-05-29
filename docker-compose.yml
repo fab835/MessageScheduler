@@ -74,13 +74,12 @@ services:
       KAFKA_TOPIC_MESSAGE_DISPATCH_REQUESTED: message.dispatch.requested
       KAFKA_TOPIC_MESSAGE_SENT: message.sent
       KAFKA_TOPIC_MESSAGE_FAILED: message.failed
-      JWT_SECRET: change-me
       LOG_LEVEL: info
     ports:
       - "${API_PORT:-3333}:3333"
     volumes:
       - ./api:/app
-      - /app/node_modules
+      - ./api/node_modules:/app/node_modules
     command: sh -lc "npm install && npm run prisma:generate && npm run dev"
 
   web:
@@ -98,7 +97,7 @@ services:
       - "${WEB_PORT:-3000}:3000"
     volumes:
       - ./web:/app
-      - /app/node_modules
+      - ./web/node_modules:/app/node_modules
     command: sh -lc "npm install && npm run dev"
 
   scheduler:
@@ -118,6 +117,9 @@ services:
       SCHEDULER_CRON: "* * * * *"
     ports:
       - "${SCHEDULER_PORT:-3334}:3334"
+    volumes:
+      - ./scheduler:/app
+      - ./scheduler/node_modules:/app/node_modules
     command: sh -lc "npm install && npm run dev"
 
   imessage-gateway:
@@ -139,6 +141,9 @@ services:
       GATEWAY_MAX_DELAY_MS: 4000
       GATEWAY_SUCCESS_RATE: 0.7
       LOG_LEVEL: info
+    volumes:
+      - ./imessage-gateway:/app
+      - ./imessage-gateway/node_modules:/app/node_modules
     ports:
       - "${IMESSAGE_GATEWAY_PORT:-3335}:3335"
     command: sh -lc "npm install && npm run dev"
